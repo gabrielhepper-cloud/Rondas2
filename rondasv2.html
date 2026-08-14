@@ -52,7 +52,7 @@
         <!-- BOTONES DE ACCIÓN -->
         <div class="grid grid-cols-1 gap-4">
             <!-- Botón Iniciar -->
-            <button id="btnInicio" onclick="iniciarRecorrido()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-emerald-800">
+            <button id="btnInicio" onclick="solicitarInicio()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-emerald-800">
                 ▶ INICIAR RECORRIDO
             </button>
 
@@ -62,7 +62,7 @@
             </button>
 
             <!-- Botón Finalizar -->
-            <button id="btnFin" onclick="finalizarRecorrido()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-lg tracking-wider texto-resaltado border-b-4 border-rose-800 hidden">
+            <button id="btnFin" onclick="solicitarFin()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-lg tracking-wider texto-resaltado border-b-4 border-rose-800 hidden">
                 ⏹ TERMINAR RECORRIDO
             </button>
         </div>
@@ -97,6 +97,21 @@
         DATOS ALMACENADOS LOCALMENTE EN EL DISPOSITIVO.
     </footer>
 
+    <!-- MODAL PERSONALIZADO (POPUP SIN TITULO DE GITHUB) -->
+    <div id="modalCustom" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center">
+            <h3 id="modalTitulo" class="text-lg font-black uppercase tracking-wider text-white mb-3">INICIAR RECORRIDO</h3>
+            <p id="modalMensaje" class="text-sm font-black text-white mb-4">POR FAVOR, INGRESA TU NOMBRE Y APELLIDO:</p>
+            
+            <input type="text" id="modalInput" placeholder="NOMBRE Y APELLIDO" class="w-full bg-slate-800 text-white font-black text-sm rounded-lg p-3 border-2 border-slate-600 focus:outline-none focus:border-emerald-500 uppercase mb-5 text-center">
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="cerrarModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 px-4 rounded-xl border border-slate-600 text-sm">CANCELAR</button>
+                <button id="modalBtnAceptar" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 px-4 rounded-xl text-sm border-b-2 border-emerald-800">ACEPTAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LÓGICA DEL SISTEMA -->
     <script>
         let enRecorrido = false;
@@ -104,7 +119,7 @@
         let contadorPuestos = 0;
         let vigiladorActual = "";
         let watchGPSId = null;
-        let rutaCoordenadas = []; // Almacena todos los puntos del trazado continuo
+        let rutaCoordenadas = [];
 
         window.onload = function() {
             const hoy = new Date().toISOString().split('T')[0];
@@ -124,12 +139,70 @@
             }
         };
 
+        function abrirModal({ titulo, mensaje, mostrarInput, placeholder, textoAceptar, accionAceptar }) {
+            document.getElementById('modalTitulo').innerText = titulo;
+            document.getElementById('modalMensaje').innerText = mensaje;
+            
+            const input = document.getElementById('modalInput');
+            if (mostrarInput) {
+                input.classList.remove('hidden');
+                input.value = "";
+                input.placeholder = placeholder || "";
+                setTimeout(() => input.focus(), 100);
+            } else {
+                input.classList.add('hidden');
+            }
+
+            const btnAceptar = document.getElementById('modalBtnAceptar');
+            btnAceptar.innerText = textoAceptar || "ACEPTAR";
+            btnAceptar.onclick = function() {
+                accionAceptar();
+            };
+
+            document.getElementById('modalCustom').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalCustom').classList.add('hidden');
+        }
+
+        function solicitarInicio() {
+            abrirModal({
+                titulo: "NUEVA RONDA",
+                mensaje: "POR FAVOR, INGRESA TU NOMBRE Y APELLIDO PARA COMENZAR:",
+                mostrarInput: true,
+                placeholder: "NOMBRE Y APELLIDO",
+                textoAceptar: "INICIAR",
+                accionAceptar: function() {
+                    const nombre = document.getElementById('modalInput').value.trim();
+                    if (!nombre) {
+                        alert("Debes ingresar Nombre y Apellido.");
+                        return;
+                    }
+                    cerrarModal();
+                    iniciarRecorrido(nombre.toUpperCase());
+                }
+            });
+        }
+
+        function solicitarFin() {
+            abrirModal({
+                titulo: "TERMINAR RONDA",
+                mensaje: "¿ESTÁ SEGURO QUE DESEA CERRAR EL RECORRIDO ACTUAL?",
+                mostrarInput: false,
+                textoAceptar: "SÍ, TERMINAR",
+                accionAceptar: function() {
+                    cerrarModal();
+                    finalizarRecorrido();
+                }
+            });
+        }
+
         function iniciarRastreoContinuo() {
             if (navigator.geolocation) {
                 watchGPSId = navigator.geolocation.watchPosition(
                     (position) => {
                         const punto = [position.coords.latitude, position.coords.longitude];
-                        // Guardar punto solo si se movió respecto al último punto
                         if (rutaCoordenadas.length === 0 || 
                             rutaCoordenadas[rutaCoordenadas.length - 1][0] !== punto[0] ||
                             rutaCoordenadas[rutaCoordenadas.length - 1][1] !== punto[1]) {
@@ -206,15 +279,8 @@
             });
         }
 
-        async function iniciarRecorrido() {
-            let nombreIngresado = prompt("POR FAVOR, INGRESA TU NOMBRE Y APELLIDO:");
-            
-            if (!nombreIngresado || nombreIngresado.trim() === "") {
-                alert("Debes ingresar Nombre y Apellido para iniciar.");
-                return;
-            }
-
-            vigiladorActual = nombreIngresado.trim().toUpperCase();
+        async function iniciarRecorrido(nombreIngresado) {
+            vigiladorActual = nombreIngresado;
 
             document.getElementById('btnInicio').disabled = true;
             document.getElementById('btnInicio').innerText = "OBTENIENDO GPS...";
@@ -285,45 +351,42 @@
         }
 
         async function finalizarRecorrido() {
-            if (confirm("¿Está seguro que desea TERMINAR el recorrido actual?")) {
-                const btnFin = document.getElementById('btnFin');
-                btnFin.disabled = true;
-                btnFin.innerText = "CERRANDO...";
+            const btnFin = document.getElementById('btnFin');
+            btnFin.disabled = true;
+            btnFin.innerText = "CERRANDO...";
 
-                detenerRastreoContinuo();
-                const gps = await obtenerGPS();
-                const ahora = new Date();
+            detenerRastreoContinuo();
+            const gps = await obtenerGPS();
+            const ahora = new Date();
 
-                if (typeof gps.lat === 'number') {
-                    rutaCoordenadas.push([gps.lat, gps.lon]);
-                }
-
-                const registroFin = {
-                    idRonda: idRondaActual,
-                    vigilador: vigiladorActual,
-                    fecha: ahora.toISOString().split('T')[0],
-                    hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
-                    evento: "FIN RECORRIDO",
-                    coordenadas: gps.lat !== "Sin Permiso" && gps.lat !== "No Soportado" ? `${gps.lat}, ${gps.lon}` : "N/A",
-                    mapaLink: gps.lat !== "Sin Permiso" && typeof gps.lat === 'number' ? `https://maps.google.com/?q=${gps.lat},${gps.lon}` : "",
-                    rutaCompleta: rutaCoordenadas // Se guarda la ruta trazada en este recorrido
-                };
-
-                guardarRegistro(registroFin);
-                
-                localStorage.removeItem('ronda_activa');
-                enRecorrido = false;
-                idRondaActual = null;
-                contadorPuestos = 0;
-                vigiladorActual = "";
-                rutaCoordenadas = [];
-
-                btnFin.disabled = false;
-                btnFin.innerText = "⏹ TERMINAR RECORRIDO";
-
-                actualizarInterfaz();
-                alert("Recorrido cerrado y ruta grabada con éxito.");
+            if (typeof gps.lat === 'number') {
+                rutaCoordenadas.push([gps.lat, gps.lon]);
             }
+
+            const registroFin = {
+                idRonda: idRondaActual,
+                vigilador: vigiladorActual,
+                fecha: ahora.toISOString().split('T')[0],
+                hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                evento: "FIN RECORRIDO",
+                coordenadas: gps.lat !== "Sin Permiso" && gps.lat !== "No Soportado" ? `${gps.lat}, ${gps.lon}` : "N/A",
+                mapaLink: gps.lat !== "Sin Permiso" && typeof gps.lat === 'number' ? `https://maps.google.com/?q=${gps.lat},${gps.lon}` : "",
+                rutaCompleta: rutaCoordenadas
+            };
+
+            guardarRegistro(registroFin);
+            
+            localStorage.removeItem('ronda_activa');
+            enRecorrido = false;
+            idRondaActual = null;
+            contadorPuestos = 0;
+            vigiladorActual = "";
+            rutaCoordenadas = [];
+
+            btnFin.disabled = false;
+            btnFin.innerText = "⏹ TERMINAR RECORRIDO";
+
+            actualizarInterfaz();
         }
 
         function guardarRegistro(nuevoRegistro) {
@@ -354,7 +417,6 @@
                 return;
             }
 
-            // Agrupar por ID de Ronda para estructurar rutas
             const rondasAgrupadas = {};
             filtrados.forEach(reg => {
                 if (!rondasAgrupadas[reg.idRonda]) {
@@ -372,7 +434,6 @@
             });
 
             const ventanaImpresion = window.open('', '_blank');
-            
             let contenidoRondas = '';
 
             Object.keys(rondasAgrupadas).forEach((idRondaKey, idx) => {
@@ -392,7 +453,6 @@
                     `;
                 });
 
-                // Crear enlace a Google Maps con todos los puntos de paso
                 let linkRutaGoogle = 'N/A';
                 if (ronda.ruta.length > 1) {
                     const origen = `${ronda.ruta[0][0]},${ronda.ruta[0][1]}`;
@@ -475,10 +535,8 @@
                                         maxZoom: 19
                                     }).addTo(map);
 
-                                    // Dibujar la línea de la ruta en AZUL
                                     const polyline = L.polyline(ronda.ruta, { color: '#0284c7', weight: 5, opacity: 0.9 }).addTo(map);
 
-                                    // Punto de Inicio (Verde) y Fin (Rojo)
                                     L.circleMarker(ronda.ruta[0], { color: '#16a34a', radius: 7, fillColor: '#16a34a', fillOpacity: 1 }).addTo(map).bindPopup('Inicio');
                                     L.circleMarker(ronda.ruta[ronda.ruta.length - 1], { color: '#dc2626', radius: 7, fillColor: '#dc2626', fillOpacity: 1 }).addTo(map).bindPopup('Fin');
 
