@@ -13,6 +13,11 @@
 </head>
 <body class="bg-slate-900 min-h-screen flex flex-col justify-between p-4">
 
+    <!-- NOTIFICACIÓN PERSONALIZADA (SIN ALERTAS FEAS DE NAVEGADOR) -->
+    <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-white font-bold px-5 py-3 rounded-xl border-2 border-slate-600 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
+        <span id="textoToast"></span>
+    </div>
+
     <!-- CABECERA DE LA APP -->
     <header class="bg-slate-950 p-4 text-center border-b-2 border-slate-700 rounded-xl mb-4">
         <h1 class="text-xl font-black tracking-widest text-white texto-resaltado">CONTROL DE RONDAS</h1>
@@ -45,7 +50,7 @@
             </button>
 
             <button id="btnPuesto" type="button" class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-black py-6 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-blue-800 hidden">
-                📍 MARCAR PUESTO <span id="siguientePuestoNum" class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">1</span>
+                📍 MARCAR PUESTO <span id="numPuestoSig" class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">1</span>
             </button>
 
             <button id="btnFin" type="button" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-lg tracking-wider texto-resaltado border-b-4 border-rose-800 hidden">
@@ -98,6 +103,22 @@
         let watchGPSId = null;
         let rutaCoordenadas = [];
 
+        function mostrarNotificacion(mensaje, esError = false) {
+            const toast = document.getElementById('notificacionToast');
+            const texto = document.getElementById('textoToast');
+            texto.innerText = mensaje;
+            
+            if (esError) {
+                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-rose-950 text-rose-200 font-bold px-5 py-3 rounded-xl border-2 border-rose-600 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm";
+            } else {
+                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm";
+            }
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaDesde').value = hoy;
@@ -109,7 +130,7 @@
                     const datos = JSON.parse(rondaGuardada);
                     enRecorrido = true;
                     idRondaActual = datos.idRonda;
-                    contadorPuestos = datos.contador;
+                    contadorPuestos = datos.contador || 0;
                     vigiladorActual = datos.vigilador || "";
                     rutaCoordenadas = datos.ruta || [];
                     iniciarRastreoContinuo();
@@ -131,7 +152,7 @@
             document.getElementById('btnConfirmarModal').addEventListener('click', async function() {
                 const nombre = document.getElementById('inputNombre').value.trim();
                 if (!nombre) {
-                    alert("Debes ingresar Nombre y Apellido.");
+                    mostrarNotificacion("Ingresa Nombre y Apellido.", true);
                     return;
                 }
                 document.getElementById('modalNombre').classList.add('hidden');
@@ -146,16 +167,16 @@
         function obtenerGPS() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
-                    reject("Tu navegador no soporta Geo-localización.");
+                    reject("Navegador sin soporte de GPS.");
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(
                     (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
                     (err) => {
                         let msg = "Error al obtener GPS.";
-                        if (err.code === 1) msg = "Permiso de ubicación denegado. Actívalo en la configuración de tu celular.";
+                        if (err.code === 1) msg = "Permiso GPS denegado en el teléfono.";
                         if (err.code === 2) msg = "Ubicación no disponible. Activa el GPS.";
-                        if (err.code === 3) msg = "Tiempo de espera agotado buscando GPS.";
+                        if (err.code === 3) msg = "Tiempo de espera de GPS agotado.";
                         reject(msg);
                     },
                     { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
@@ -175,7 +196,7 @@
                             guardarEstadoRondaActiva();
                         }
                     },
-                    (error) => console.error("Error GPS:", error),
+                    (error) => console.error("Error GPS continuo:", error),
                     { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
                 );
             }
@@ -217,9 +238,9 @@
                 iniciarRastreoContinuo();
                 guardarEstadoRondaActiva();
                 actualizarInterfaz();
-                alert("Ronda iniciada correctamente.");
+                mostrarNotificacion("Recorrido iniciado con éxito");
             } catch (err) {
-                alert(err);
+                mostrarNotificacion(err, true);
             } finally {
                 btnInicio.disabled = false;
                 btnInicio.innerText = "▶ INICIAR RECORRIDO";
@@ -249,10 +270,9 @@
 
                 guardarRegistro(registroPuesto);
                 guardarEstadoRondaActiva();
-                actualizarInterfaz();
-                alert("Puesto " + contadorPuestos + " registrado.");
+                mostrarNotificacion("Puesto " + contadorPuestos + " registrado.");
             } catch (err) {
-                alert(err);
+                mostrarNotificacion(err, true);
             } finally {
                 btnPuesto.disabled = false;
                 actualizarInterfaz();
@@ -302,7 +322,7 @@
             rutaCoordenadas = [];
 
             actualizarInterfaz();
-            alert("Recorrido finalizado.");
+            mostrarNotificacion("Recorrido finalizado.");
         }
 
         function guardarRegistro(nuevoRegistro) {
@@ -322,7 +342,6 @@
             const btnFin = document.getElementById('btnFin');
             const estadoTexto = document.getElementById('estadoTexto');
             const infoRondaActual = document.getElementById('infoRondaActual');
-            const siguientePuestoNum = document.getElementById('siguientePuestoNum');
             const contPuestosText = document.getElementById('contadorPuestos');
             const panelVigilador = document.getElementById('panelVigiladorActivo');
             const nombreVigiladorEnCurso = document.getElementById('nombreVigiladorEnCurso');
@@ -331,11 +350,14 @@
                 btnInicio.classList.add('hidden');
                 btnPuesto.classList.remove('hidden');
                 btnFin.classList.remove('hidden');
+                
+                // Actualiza el texto completo del botón de marcar puesto sin depender de referencias rotas
+                btnPuesto.innerHTML = `📍 MARCAR PUESTO <span class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">${contadorPuestos + 1}</span>`;
+                
                 estadoTexto.innerText = "EN RECORRIDO";
                 estadoTexto.className = "text-2xl font-black mt-2 text-emerald-400 tracking-wide animate-pulse texto-resaltado";
                 infoRondaActual.classList.remove('hidden');
                 contPuestosText.innerText = contadorPuestos;
-                siguientePuestoNum.innerText = contadorPuestos + 1;
 
                 if (vigiladorActual) {
                     nombreVigiladorEnCurso.innerText = vigiladorActual;
@@ -357,7 +379,7 @@
             const hasta = document.getElementById('fechaHasta').value;
 
             if (!desde || !hasta) {
-                alert("Por favor, selecciona el rango de fechas.");
+                mostrarNotificacion("Selecciona el rango de fechas.", true);
                 return;
             }
 
@@ -365,7 +387,7 @@
             const filtrados = todosLosRegistros.filter(reg => reg.fecha >= desde && reg.fecha <= hasta);
 
             if (filtrados.length === 0) {
-                alert("No se encontraron registros en el rango de fechas seleccionado.");
+                mostrarNotificacion("No hay registros en esas fechas.", true);
                 return;
             }
 
