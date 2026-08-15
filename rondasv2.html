@@ -97,7 +97,7 @@
         DATOS ALMACENADOS LOCALMENTE EN EL DISPOSITIVO.
     </footer>
 
-    <!-- MODAL PERSONALIZADO (POPUP SIN TITULO DE GITHUB) -->
+    <!-- MODAL PERSONALIZADO -->
     <div id="modalCustom" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full shadow-2xl text-center">
             <h3 id="modalTitulo" class="text-lg font-black uppercase tracking-wider text-white mb-3">INICIAR RECORRIDO</h3>
@@ -211,7 +211,7 @@
                         }
                     },
                     (error) => console.error("Error rastreo continuo:", error),
-                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+                    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
                 );
             }
         }
@@ -453,13 +453,13 @@
                     `;
                 });
 
+                // ENLACE DIRECTO A MAPA VISUAL SIN MODO "DIRECCIONES/PARADAS"
                 let linkRutaGoogle = 'N/A';
-                if (ronda.ruta.length > 1) {
-                    const origen = `${ronda.ruta[0][0]},${ronda.ruta[0][1]}`;
-                    const destino = `${ronda.ruta[ronda.ruta.length - 1][0]},${ronda.ruta[ronda.ruta.length - 1][1]}`;
-                    const waypoints = ronda.ruta.slice(1, -1).map(p => `${p[0]},${p[1]}`).slice(0, 8).join('|');
-                    const urlGmaps = `https://www.google.com/maps/dir/?api=1&origin=${origen}&destination=${destino}${waypoints ? '&waypoints=' + waypoints : ''}&travelmode=walking`;
-                    linkRutaGoogle = `<a href="${urlGmaps}" target="_blank" class="btn-gmaps">🗺️ VER RECORRIDO COMPLETO EN GOOGLE MAPS</a>`;
+                if (ronda.ruta.length > 0) {
+                    const centro = `${ronda.ruta[0][0]},${ronda.ruta[0][1]}`;
+                    // Abre la ubicación exacta en el mapa satelital sin calcular trayectos por calles
+                    const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${centro}`;
+                    linkRutaGoogle = `<a href="${urlGmaps}" target="_blank" class="btn-gmaps">📍 ABRIR UBICACIÓN EN GOOGLE MAPS</a>`;
                 }
 
                 contenidoRondas += `
@@ -510,7 +510,7 @@
                         table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
                         th { background-color: #1e293b; color: #ffffff; padding: 8px; font-size: 10px; text-transform: uppercase; }
                         tr:nth-child(even) { background-color: #f8fafc; }
-                        .mapa-box { width: 100%; height: 220px; border-radius: 6px; border: 1px solid #cbd5e1; margin-top: 8px; }
+                        .mapa-box { width: 100%; height: 260px; border-radius: 6px; border: 1px solid #cbd5e1; margin-top: 8px; }
                     </style>
                 </head>
                 <body>
@@ -531,16 +531,36 @@
                                 if (ronda.ruta && ronda.ruta.length > 1) {
                                     const map = L.map('mapa_' + idx, { attributionControl: false, zoomControl: false });
                                     
-                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    // Utiliza la capa de mapa satelital para ver claramente calles internas de barrios
+                                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                                         maxZoom: 19
                                     }).addTo(map);
 
-                                    const polyline = L.polyline(ronda.ruta, { color: '#0284c7', weight: 5, opacity: 0.9 }).addTo(map);
+                                    // Trazado de la ruta EXACTA sin recálculo de calles
+                                    const polyline = L.polyline(ronda.ruta, { color: '#00ffff', weight: 4, opacity: 0.9 }).addTo(map);
 
-                                    L.circleMarker(ronda.ruta[0], { color: '#16a34a', radius: 7, fillColor: '#16a34a', fillOpacity: 1 }).addTo(map).bindPopup('Inicio');
-                                    L.circleMarker(ronda.ruta[ronda.ruta.length - 1], { color: '#dc2626', radius: 7, fillColor: '#dc2626', fillOpacity: 1 }).addTo(map).bindPopup('Fin');
+                                    // Dibujar cada Puesto marcado exactamente donde se registró
+                                    let contadorP = 1;
+                                    ronda.eventos.forEach(ev => {
+                                        if (ev.coordenadas && ev.coordenadas !== "N/A") {
+                                            let parts = ev.coordenadas.split(',');
+                                            let lat = parseFloat(parts[0]);
+                                            let lon = parseFloat(parts[1]);
+                                            
+                                            let colorMarker = ev.evento.startsWith("INICIO") ? '#22c55e' : ev.evento.startsWith("FIN") ? '#ef4444' : '#3b82f6';
+                                            let labelText = ev.evento.startsWith("Puesto") ? `P${contadorP++}` : ev.evento;
 
-                                    map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
+                                            L.circleMarker([lat, lon], {
+                                                color: '#ffffff',
+                                                radius: 8,
+                                                fillColor: colorMarker,
+                                                fillOpacity: 1,
+                                                weight: 2
+                                            }).addTo(map).bindPopup(`<b>${labelText}</b><br>${ev.hora}`);
+                                        }
+                                    });
+
+                                    map.fitBounds(polyline.getBounds(), { padding: [25, 25] });
                                 }
                             });
 
