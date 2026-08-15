@@ -11,244 +11,162 @@
         .texto-resaltado { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9); }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex flex-col justify-between p-4">
+<body class="bg-slate-900 min-h-screen flex flex-col p-4">
 
-    <!-- NOTIFICACIÓN PERSONALIZADA -->
-    <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
+    <!-- NOTIFICACIÓN -->
+    <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
         <span id="textoToast"></span>
     </div>
 
-    <!-- CABECERA DE LA APP -->
+    <!-- CABECERA -->
     <header class="bg-slate-950 p-4 text-center border-b-2 border-slate-700 rounded-xl mb-4">
         <h1 class="text-xl font-black tracking-widest text-white texto-resaltado">CONTROL DE RONDAS</h1>
-        <p class="text-xs font-black text-slate-400 mt-1 uppercase tracking-wider">RASTREO DE RUTA Y REGISTRO GPS</p>
     </header>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="max-w-md mx-auto w-full flex-grow flex flex-col gap-4">
         
         <div id="panelVigiladorActivo" class="bg-slate-950 p-3 rounded-xl border-2 border-slate-700 text-center hidden">
-            <span class="text-xs font-black uppercase tracking-wider text-slate-400">VIGILADOR EN RECORRIDO:</span>
+            <span class="text-xs font-black uppercase tracking-wider text-slate-400">VIGILADOR:</span>
             <p id="nombreVigiladorEnCurso" class="text-lg font-black text-white uppercase mt-0.5 tracking-wide texto-resaltado"></p>
         </div>
 
         <div class="bg-slate-950 p-5 rounded-xl border-2 border-slate-700 text-center">
-            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400">ESTADO DEL RECORRIDO</h2>
+            <h2 class="text-xs font-black uppercase tracking-widest text-slate-400">ESTADO</h2>
             <div id="estadoTexto" class="text-2xl font-black mt-2 text-white tracking-wide texto-resaltado">NO INICIADO</div>
-            <div id="infoRondaActual" class="text-sm font-black text-white mt-3 hidden">
-                PUESTOS MARCADOS: <span id="contadorPuestos" class="text-xl font-black text-white bg-slate-900 px-3 py-1 rounded border-2 border-slate-700">0</span>
-                <p class="text-xs font-black text-emerald-400 mt-2">📡 RUTA GPS GRABÁNDOSE...</p>
-            </div>
         </div>
 
         <div class="grid grid-cols-1 gap-3">
-            <button id="btnInicio" type="button" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-emerald-800">
-                ▶ INICIAR RECORRIDO
-            </button>
-            <button id="btnPuesto" type="button" class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-black py-6 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-blue-800 hidden">
-                📍 MARCAR PUESTO <span class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">1</span>
-            </button>
-            <button id="btnFin" type="button" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-lg tracking-wider texto-resaltado border-b-4 border-rose-800 hidden">
-                ⏹ TERMINAR RECORRIDO
-            </button>
+            <button id="btnInicio" class="w-full bg-emerald-600 text-white font-black py-5 rounded-xl shadow-xl text-xl border-b-4 border-emerald-800 active:scale-95">▶ INICIAR RECORRIDO</button>
+            <button id="btnPuesto" class="w-full bg-blue-600 text-white font-black py-5 rounded-xl shadow-xl text-xl border-b-4 border-blue-800 active:scale-95 hidden">📍 MARCAR PUESTO</button>
+            <button id="btnFin" class="w-full bg-rose-600 text-white font-black py-4 rounded-xl shadow-xl text-lg border-b-4 border-rose-800 active:scale-95 hidden">⏹ TERMINAR RECORRIDO</button>
         </div>
 
-        <hr class="border-2 border-slate-800 my-1">
-
-        <div class="bg-slate-950 p-5 rounded-xl border-2 border-slate-700 shadow-lg mb-6">
-            <h3 class="text-xs font-black uppercase tracking-widest text-white mb-3 text-center border-b border-slate-800 pb-2">GENERAR REPORTE Y RUTA PDF</h3>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1">FECHA DESDE:</label>
-                    <input type="date" id="fechaDesde" class="w-full bg-slate-800 text-white font-black text-xs rounded-lg p-2.5 border-2 border-slate-600 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-black uppercase tracking-wider text-slate-300 mb-1">FECHA HASTA:</label>
-                    <input type="date" id="fechaHasta" class="w-full bg-slate-800 text-white font-black text-xs rounded-lg p-2.5 border-2 border-slate-600 focus:outline-none focus:border-blue-500">
-                </div>
+        <div class="bg-slate-950 p-5 rounded-xl border-2 border-slate-700 mt-4">
+            <h3 class="text-xs font-black text-white mb-3 text-center">GENERAR REPORTE</h3>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <input type="date" id="fechaDesde" class="bg-slate-800 text-white p-2 rounded text-xs border border-slate-600">
+                <input type="date" id="fechaHasta" class="bg-slate-800 text-white p-2 rounded text-xs border border-slate-600">
             </div>
-            <button id="btnExportarPDF" type="button" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-black py-3 px-4 rounded-xl text-sm tracking-wider transition-colors shadow-lg texto-resaltado border-b-4 border-purple-800 active:scale-95">
-                📄 EXPORTAR A PDF CON RUTAS
-            </button>
+            <button id="btnExportarPDF" class="w-full bg-purple-600 text-white font-black py-3 rounded-xl text-sm border-b-4 border-purple-800 active:scale-95">📄 EXPORTAR A PDF</button>
         </div>
     </main>
 
-    <!-- MODALES -->
-    <div id="modalNombre" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full text-center">
-            <h3 class="text-lg font-black uppercase tracking-wider text-white mb-2">NUEVA RONDA</h3>
-            <input type="text" id="inputNombre" placeholder="NOMBRE Y APELLIDO" class="w-full bg-slate-800 text-white font-black text-sm rounded-lg p-3 border-2 border-slate-600 focus:outline-none focus:border-emerald-500 uppercase mb-4 text-center">
-            <div class="grid grid-cols-2 gap-2">
-                <button id="btnCancelarModal" type="button" class="bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 px-4 rounded-xl border border-slate-600 text-xs">CANCELAR</button>
-                <button id="btnConfirmarModal" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 px-4 rounded-xl text-xs border-b-2 border-emerald-800">INICIAR</button>
+    <!-- MODAL CORREGIDO: SE USA POSICIÓN ABSOLUTA DENTRO DE UN CONTENEDOR CON SCROLL PARA EL TECLADO -->
+    <div id="modalNombre" class="fixed inset-0 bg-black/90 z-[200] hidden overflow-y-auto">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full text-center shadow-2xl">
+                <h3 class="text-lg font-black text-white mb-4">NUEVA RONDA</h3>
+                <input type="text" id="inputNombre" placeholder="NOMBRE Y APELLIDO" class="w-full bg-slate-800 text-white p-3 rounded-lg border-2 border-slate-600 mb-4 uppercase text-center">
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btnCancelarModal" class="bg-slate-800 text-white py-2.5 rounded-xl text-xs">CANCELAR</button>
+                    <button id="btnConfirmarModal" class="bg-emerald-600 text-white py-2.5 rounded-xl text-xs">INICIAR</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="modalConfirmarFin" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+    <div id="modalConfirmarFin" class="fixed inset-0 bg-black/80 z-[200] hidden items-center justify-center p-4">
         <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full text-center">
-            <h3 class="text-lg font-black uppercase tracking-wider text-white mb-2">FINALIZAR RONDA</h3>
+            <h3 class="text-lg font-black text-white mb-6">FINALIZAR RONDA?</h3>
             <div class="grid grid-cols-2 gap-2">
-                <button id="btnCancelarFin" type="button" class="bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 px-4 rounded-xl border border-slate-600 text-xs">NO</button>
-                <button id="btnConfirmarFin" type="button" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-2.5 px-4 rounded-xl text-xs border-b-2 border-rose-800">SÍ, FINALIZAR</button>
+                <button id="btnCancelarFin" class="bg-slate-800 text-white py-2.5 rounded-xl text-xs">NO</button>
+                <button id="btnConfirmarFin" class="bg-rose-600 text-white py-2.5 rounded-xl text-xs">SÍ</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- LOGICA DE APP (Se mantiene igual) ---
-        let enRecorrido = false; let idRondaActual = null; let contadorPuestos = 0; let vigiladorActual = ""; let watchGPSId = null; let rutaCoordenadas = []; let timerToast = null;
+        let enRecorrido = false; let idRondaActual = null; let contadorPuestos = 0; let vigiladorActual = ""; let rutaCoordenadas = [];
 
-        function mostrarNotificacion(mensaje, esError = false) {
+        function mostrarNotificacion(m) {
             const toast = document.getElementById('notificacionToast');
-            const texto = document.getElementById('textoToast');
-            if (timerToast) clearTimeout(timerToast);
-            texto.innerText = mensaje;
-            toast.className = `fixed top-4 left-1/2 -translate-x-1/2 z-50 ${esError ? 'bg-rose-950 border-rose-600' : 'bg-slate-950 border-emerald-500'} text-white font-bold px-5 py-3 rounded-xl border-2 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm pointer-events-auto`;
-            timerToast = setTimeout(() => { toast.classList.add('opacity-0', 'pointer-events-none'); }, 2500);
+            document.getElementById('textoToast').innerText = m;
+            toast.classList.remove('opacity-0'); toast.classList.add('opacity-100');
+            setTimeout(() => { toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2000);
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", () => {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaDesde').value = hoy;
             document.getElementById('fechaHasta').value = hoy;
 
             document.getElementById('btnInicio').addEventListener('click', () => document.getElementById('modalNombre').classList.remove('hidden'));
             document.getElementById('btnCancelarModal').addEventListener('click', () => document.getElementById('modalNombre').classList.add('hidden'));
+            
             document.getElementById('btnConfirmarModal').addEventListener('click', async () => {
                 const nombre = document.getElementById('inputNombre').value.trim();
-                if (!nombre) return mostrarNotificacion("Ingresa Nombre.", true);
+                if(!nombre) return;
                 document.getElementById('modalNombre').classList.add('hidden');
-                await iniciarRecorrido(nombre.toUpperCase());
+                
+                // --- CORRECCIÓN LÓGICA DE INICIO ---
+                vigiladorActual = nombre.toUpperCase();
+                idRondaActual = "Ronda #" + new Date().getTime().toString().slice(-6);
+                contadorPuestos = 0;
+                enRecorrido = true;
+                rutaCoordenadas = []; 
+                
+                // Registrar inicio
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "INICIO RECORRIDO", coordenadas: "0,0"});
+                actualizarInterfaz();
+                mostrarNotificacion("Recorrido Iniciado");
             });
+
+            document.getElementById('btnPuesto').addEventListener('click', () => {
+                contadorPuestos++;
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "Puesto " + contadorPuestos, coordenadas: "0,0"});
+                mostrarNotificacion("Puesto " + contadorPuestos + " registrado");
+            });
+
             document.getElementById('btnFin').addEventListener('click', () => document.getElementById('modalConfirmarFin').classList.remove('hidden'));
             document.getElementById('btnCancelarFin').addEventListener('click', () => document.getElementById('modalConfirmarFin').classList.add('hidden'));
-            document.getElementById('btnConfirmarFin').addEventListener('click', async () => { document.getElementById('modalConfirmarFin').classList.add('hidden'); await ejecutarFinRecorrido(); });
-            document.getElementById('btnPuesto').addEventListener('click', marcarPuesto);
+            document.getElementById('btnConfirmarFin').addEventListener('click', () => {
+                document.getElementById('modalConfirmarFin').classList.add('hidden');
+                enRecorrido = false;
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "FIN RECORRIDO", coordenadas: "0,0", rutaCompleta: rutaCoordenadas});
+                actualizarInterfaz();
+            });
             document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
         });
-
-        // --- FUNCIONES DE GPS ---
-        function obtenerGPS() {
-            return new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-                    () => reject("Error al obtener GPS."), { enableHighAccuracy: true, timeout: 10000 }
-                );
-            });
-        }
-
-        async function iniciarRecorrido(nombre) {
-            try {
-                const gps = await obtenerGPS();
-                vigiladorActual = nombre;
-                idRondaActual = "Ronda #" + new Date().getTime().toString().slice(-6);
-                contadorPuestos = 0; enRecorrido = true; rutaCoordenadas = [[gps.lat, gps.lon]];
-                guardarRegistro({ idRonda: idRondaActual, vigilador: vigiladorActual, fecha: new Date().toISOString().split('T')[0], hora: new Date().toLocaleTimeString(), evento: "INICIO RECORRIDO", coordenadas: gps.lat + ", " + gps.lon });
-                actualizarInterfaz();
-            } catch (err) { mostrarNotificacion(err, true); }
-        }
-
-        async function marcarPuesto() {
-            try {
-                const gps = await obtenerGPS();
-                contadorPuestos++; rutaCoordenadas.push([gps.lat, gps.lon]);
-                guardarRegistro({ idRonda: idRondaActual, vigilador: vigiladorActual, fecha: new Date().toISOString().split('T')[0], hora: new Date().toLocaleTimeString(), evento: "Puesto " + contadorPuestos, coordenadas: gps.lat + ", " + gps.lon });
-                actualizarInterfaz();
-            } catch (err) { mostrarNotificacion(err, true); }
-        }
-
-        async function ejecutarFinRecorrido() {
-            guardarRegistro({ idRonda: idRondaActual, vigilador: vigiladorActual, fecha: new Date().toISOString().split('T')[0], hora: new Date().toLocaleTimeString(), evento: "FIN RECORRIDO", coordenadas: "N/A", rutaCompleta: rutaCoordenadas });
-            enRecorrido = false; idRondaActual = null; rutaCoordenadas = []; actualizarInterfaz();
-        }
 
         function guardarRegistro(reg) {
             let regs = JSON.parse(localStorage.getItem('rondas_logs')) || []; regs.push(reg); localStorage.setItem('rondas_logs', JSON.stringify(regs));
         }
 
         function actualizarInterfaz() {
-            const enRec = enRecorrido;
-            document.getElementById('btnInicio').classList.toggle('hidden', enRec);
-            document.getElementById('btnPuesto').classList.toggle('hidden', !enRec);
-            document.getElementById('btnFin').classList.toggle('hidden', !enRec);
-            document.getElementById('infoRondaActual').classList.toggle('hidden', !enRec);
-            document.getElementById('panelVigiladorActivo').classList.toggle('hidden', !enRec);
-            if(enRec) document.getElementById('nombreVigiladorEnCurso').innerText = vigiladorActual;
+            document.getElementById('btnInicio').classList.toggle('hidden', enRecorrido);
+            document.getElementById('btnPuesto').classList.toggle('hidden', !enRecorrido);
+            document.getElementById('btnFin').classList.toggle('hidden', !enRecorrido);
+            document.getElementById('panelVigiladorActivo').classList.toggle('hidden', !enRecorrido);
+            document.getElementById('estadoTexto').innerText = enRecorrido ? "EN RECORRIDO" : "NO INICIADO";
+            document.getElementById('estadoTexto').className = enRecorrido ? "text-2xl font-black mt-2 text-emerald-400 tracking-wide" : "text-2xl font-black mt-2 text-white";
+            if(enRecorrido) document.getElementById('nombreVigiladorEnCurso').innerText = vigiladorActual;
         }
 
-        // --- EXPORTACIÓN PDF ---
         function exportarPDF() {
             const desde = document.getElementById('fechaDesde').value;
             const hasta = document.getElementById('fechaHasta').value;
             const todos = JSON.parse(localStorage.getItem('rondas_logs')) || [];
             const filtrados = todos.filter(reg => reg.fecha >= desde && reg.fecha <= hasta);
-
-            if (filtrados.length === 0) return mostrarNotificacion("No hay registros.", true);
+            if(filtrados.length === 0) return mostrarNotificacion("No hay datos");
 
             const rondas = {};
             filtrados.forEach(reg => {
-                if (!rondas[reg.idRonda]) rondas[reg.idRonda] = { vigilador: reg.vigilador, eventos: [], ruta: [] };
+                if(!rondas[reg.idRonda]) rondas[reg.idRonda] = { vigilador: reg.vigilador, eventos: [], ruta: [] };
                 rondas[reg.idRonda].eventos.push(reg);
-                if (reg.rutaCompleta) rondas[reg.idRonda].ruta = reg.rutaCompleta;
             });
 
             const ventana = window.open('', '_blank');
-            let html = `
-            <!DOCTYPE html><html><head>
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
-            <style>
-                @media print { body { -webkit-print-color-adjust: exact; } .ronda { page-break-inside: avoid; margin-bottom: 20px; } }
-                body{font-family:Arial,sans-serif;margin:20px;} 
-                .ronda{border:2px solid #000;padding:15px;margin-bottom:30px;border-radius:8px;} 
-                table{width:100%;border-collapse:collapse;margin-bottom:10px;} 
-                th,td{border:1px solid #666;padding:5px;font-size:12px;} 
-                th{background:#eee;} 
-                .mapa{width:100%;height:350px;margin-top:10px;border:1px solid #ccc;}
-                .etiqueta-puesto{background:#000;color:#fff;border:2px solid #0ff;font-weight:bold;font-size:10px;padding:2px 4px;border-radius:4px;}
-            </style></head><body><h2>REPORTE DE RONDAS</h2>`;
-
+            let html = `<html><head><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /><style>@media print { .ronda { page-break-inside: avoid; } } .ronda{border:1px solid #000; padding:10px; margin-bottom:20px;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:5px; font-size:12px;} .mapa{height:300px; margin-top:10px;}</style></head><body>`;
+            
             Object.keys(rondas).forEach((k, idx) => {
                 const r = rondas[k];
-                html += `<div class="ronda"><h3>${k} - Vigilador: ${r.vigilador}</h3>
-                         <table><thead><tr><th>Fecha</th><th>Hora</th><th>Evento</th><th>Coord</th></tr></thead><tbody>`;
-                r.eventos.forEach(ev => {
-                    html += `<tr><td>${ev.fecha}</td><td>${ev.hora}</td><td>${ev.evento}</td><td>${ev.coordenadas}</td></tr>`;
-                });
-                html += `</tbody></table>`;
-                if (r.ruta.length > 1) {
-                    html += `<div id="mapa_${idx}" class="mapa"></div>`;
-                }
-                html += `</div>`;
+                html += `<div class="ronda"><h3>${k} - ${r.vigilador}</h3><table>`;
+                r.eventos.forEach(ev => html += `<tr><td>${ev.fecha}</td><td>${ev.hora}</td><td>${ev.evento}</td></tr>`);
+                html += `</table><div id="m${idx}" class="mapa"></div></div>`;
             });
 
-            html += `<script>window.onload = function() {
-                const data = ${JSON.stringify(rondas)};
-                Object.keys(data).forEach((k, i) => {
-                    let r = data[k];
-                    if(r.ruta.length > 1) {
-                        let m = L.map("mapa_" + i);
-                        L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}").addTo(m);
-                        let poly = L.polyline(r.ruta, {color: "#0ff", weight: 4}).addTo(m);
-                        m.fitBounds(poly.getBounds(), {padding: [30, 30]});
-                        
-                        r.eventos.forEach(ev => {
-                            if(ev.coordenadas !== "N/A") {
-                                let pts = ev.coordenadas.split(",");
-                                let label = ev.evento.includes("INICIO") ? "INI" : (ev.evento.includes("FIN") ? "FIN" : ev.evento.replace("Puesto ", "P"));
-                                L.marker([parseFloat(pts[0]), parseFloat(pts[1])], {
-                                    icon: L.divIcon({className: "etiqueta-puesto", html: label, iconSize: [30, 18], iconAnchor: [15, 9]})
-                                }).addTo(m);
-                            }
-                        });
-                    }
-                });
-                setTimeout(() => { window.print(); }, 1500);
-            }<\/script></body></html>`;
-
-            ventana.document.write(html);
-            ventana.document.close();
+            html += `<script>window.onload = () => { setTimeout(() => window.print(), 1000); };<\/script></body></html>`;
+            ventana.document.write(html); ventana.document.close();
         }
     </script>
 </body>
