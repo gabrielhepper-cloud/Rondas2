@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Rondas - Reporte con Mapa de Ruta</title>
-    
+    <title>Control de Rondas</title>
     <meta name="theme-color" content="#1e293b">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; color: #ffffff !important; }
@@ -59,7 +55,7 @@
 
         <hr class="border-2 border-slate-800 my-1">
 
-        <!-- PANEL DE EXPORTACIÓN / ADMINISTRACIÓN -->
+        <!-- PANEL DE EXPORTACIÓN -->
         <div class="bg-slate-950 p-5 rounded-xl border-2 border-slate-700 shadow-lg mb-6">
             <h3 class="text-xs font-black uppercase tracking-widest text-white mb-3 text-center border-b border-slate-800 pb-2">GENERAR REPORTE Y RUTA PDF</h3>
             
@@ -102,35 +98,37 @@
         let watchGPSId = null;
         let rutaCoordenadas = [];
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", function() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaDesde').value = hoy;
             document.getElementById('fechaHasta').value = hoy;
 
-            // Recuperar datos de sesión guardados
             const rondaGuardada = localStorage.getItem('ronda_activa');
             if (rondaGuardada) {
-                const datos = JSON.parse(rondaGuardada);
-                enRecorrido = true;
-                idRondaActual = datos.idRonda;
-                contadorPuestos = datos.contador;
-                vigiladorActual = datos.vigilador || "";
-                rutaCoordenadas = datos.ruta || [];
-                iniciarRastreoContinuo();
-                actualizarInterfaz();
+                try {
+                    const datos = JSON.parse(rondaGuardada);
+                    enRecorrido = true;
+                    idRondaActual = datos.idRonda;
+                    contadorPuestos = datos.contador;
+                    vigiladorActual = datos.vigilador || "";
+                    rutaCoordenadas = datos.ruta || [];
+                    iniciarRastreoContinuo();
+                    actualizarInterfaz();
+                } catch(e) {
+                    localStorage.removeItem('ronda_activa');
+                }
             }
 
-            // Event Listeners seguros
-            document.getElementById('btnInicio').addEventListener('click', () => {
+            document.getElementById('btnInicio').addEventListener('click', function() {
                 document.getElementById('inputNombre').value = "";
                 document.getElementById('modalNombre').classList.remove('hidden');
             });
 
-            document.getElementById('btnCancelarModal').addEventListener('click', () => {
+            document.getElementById('btnCancelarModal').addEventListener('click', function() {
                 document.getElementById('modalNombre').classList.add('hidden');
             });
 
-            document.getElementById('btnConfirmarModal').addEventListener('click', async () => {
+            document.getElementById('btnConfirmarModal').addEventListener('click', async function() {
                 const nombre = document.getElementById('inputNombre').value.trim();
                 if (!nombre) {
                     alert("Debes ingresar Nombre y Apellido.");
@@ -155,7 +153,7 @@
                     (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
                     (err) => {
                         let msg = "Error al obtener GPS.";
-                        if (err.code === 1) msg = "Permiso de ubicación denegado. Actívalo en la configuración de tu navegador/celular.";
+                        if (err.code === 1) msg = "Permiso de ubicación denegado. Actívalo en la configuración de tu celular.";
                         if (err.code === 2) msg = "Ubicación no disponible. Activa el GPS.";
                         if (err.code === 3) msg = "Tiempo de espera agotado buscando GPS.";
                         reject(msg);
@@ -177,7 +175,7 @@
                             guardarEstadoRondaActiva();
                         }
                     },
-                    (error) => console.error("Error rastreo continuo:", error),
+                    (error) => console.error("Error GPS:", error),
                     { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
                 );
             }
@@ -211,15 +209,15 @@
                     fecha: ahora.toISOString().split('T')[0],
                     hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
                     evento: "INICIO RECORRIDO",
-                    coordenadas: `${gps.lat}, ${gps.lon}`,
-                    mapaLink: `https://maps.google.com/?q=${gps.lat},${gps.lon}`
+                    coordenadas: gps.lat + ", " + gps.lon,
+                    mapaLink: "https://maps.google.com/?q=" + gps.lat + "," + gps.lon
                 };
 
                 guardarRegistro(registroInicio);
                 iniciarRastreoContinuo();
                 guardarEstadoRondaActiva();
                 actualizarInterfaz();
-                alert(`Ronda iniciada correctamente.`);
+                alert("Ronda iniciada correctamente.");
             } catch (err) {
                 alert(err);
             } finally {
@@ -244,15 +242,15 @@
                     vigilador: vigiladorActual,
                     fecha: ahora.toISOString().split('T')[0],
                     hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
-                    evento: `Puesto ${contadorPuestos}`,
-                    coordenadas: `${gps.lat}, ${gps.lon}`,
-                    mapaLink: `https://maps.google.com/?q=${gps.lat},${gps.lon}`
+                    evento: "Puesto " + contadorPuestos,
+                    coordenadas: gps.lat + ", " + gps.lon,
+                    mapaLink: "https://maps.google.com/?q=" + gps.lat + "," + gps.lon
                 };
 
                 guardarRegistro(registroPuesto);
                 guardarEstadoRondaActiva();
                 actualizarInterfaz();
-                alert(`Puesto ${contadorPuestos} registrado.`);
+                alert("Puesto " + contadorPuestos + " registrado.");
             } catch (err) {
                 alert(err);
             } finally {
@@ -277,8 +275,8 @@
                     fecha: ahora.toISOString().split('T')[0],
                     hora: ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
                     evento: "FIN RECORRIDO",
-                    coordenadas: `${gps.lat}, ${gps.lon}`,
-                    mapaLink: `https://maps.google.com/?q=${gps.lat},${gps.lon}`,
+                    coordenadas: gps.lat + ", " + gps.lon,
+                    mapaLink: "https://maps.google.com/?q=" + gps.lat + "," + gps.lon,
                     rutaCompleta: rutaCoordenadas
                 };
                 guardarRegistro(registroFin);
@@ -387,139 +385,43 @@
                 }
             });
 
-            const ventanaImpresion = window.open('', '_blank');
-            let contenidoRondas = '';
+            const ventana = window.open('', '_blank');
+            let htmlHTML = '<!DOCTYPE html><html><head><title>Reporte de Rondas</title>';
+            htmlHTML += '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />';
+            htmlHTML += '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><' + '/script>';
+            htmlHTML += '<style>body{font-family:Arial,sans-serif;margin:15px;color:#0f172a;} .ronda{border:2px solid #0f172a;padding:10px;margin-bottom:15px;border-radius:6px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #cbd5e1;padding:6px;font-size:12px;text-align:left;} th{background:#0f172a;color:#fff;} .mapa{width:100%;height:250px;margin-top:10px;}</style>';
+            htmlHTML += '</head><body><h2>REPORTE DE RONDAS Y RUTAS GPS</h2>';
 
-            Object.keys(rondasAgrupadas).forEach((idRondaKey, idx) => {
-                const ronda = rondasAgrupadas[idRondaKey];
+            Object.keys(rondasAgrupadas).forEach((key, idx) => {
+                const r = rondasAgrupadas[key];
+                htmlHTML += '<div class="ronda"><h3>' + key + ' - Vigilador: ' + r.vigilador + '</h3>';
+                htmlHTML += '<table><thead><tr><th>Fecha</th><th>Hora</th><th>Evento</th><th>Coordenadas</th></tr></thead><tbody>';
                 
-                let tablaHTML = '';
-                ronda.eventos.forEach(reg => {
-                    const linkMapa = reg.mapaLink ? `<a href="${reg.mapaLink}" target="_blank" style="color: #0284c7; font-weight: bold;">Ver Punto ➔</a>` : 'N/A';
-                    tablaHTML += `
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 8px; text-align: center;">${reg.fecha.split('-').reverse().join('/')}</td>
-                            <td style="padding: 8px; text-align: center;">${reg.hora}</td>
-                            <td style="padding: 8px; text-align: left; font-weight: 600;">${reg.evento}</td>
-                            <td style="padding: 8px; text-align: left; font-size: 11px; font-family: monospace;">${reg.coordenadas}</td>
-                            <td style="padding: 8px; text-align: center;">${linkMapa}</td>
-                        </tr>
-                    `;
+                r.eventos.forEach(ev => {
+                    htmlHTML += '<tr><td>' + ev.fecha + '</td><td>' + ev.hora + '</td><td>' + ev.evento + '</td><td>' + ev.coordenadas + '</td></tr>';
                 });
 
-                let linkRutaGoogle = 'N/A';
-                if (ronda.ruta.length > 0) {
-                    const centro = `${ronda.ruta[0][0]},${ronda.ruta[0][1]}`;
-                    const urlGmaps = `https://www.google.com/maps/search/?api=1&query=${centro}`;
-                    linkRutaGoogle = `<a href="${urlGmaps}" target="_blank" class="btn-gmaps">📍 ABRIR EN GOOGLE MAPS</a>`;
+                htmlHTML += '</tbody></table>';
+                if (r.ruta && r.ruta.length > 1) {
+                    htmlHTML += '<div id="mapa_' + idx + '" class="mapa"></div>';
                 }
-
-                contenidoRondas += `
-                    <div class="ronda-card">
-                        <div class="ronda-header">
-                            <div>
-                                <h2>${idRondaKey} - VIGILADOR: ${ronda.vigilador}</h2>
-                                <p>FECHA: ${ronda.fecha.split('-').reverse().join('/')}</p>
-                            </div>
-                            <div>${linkRutaGoogle}</div>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="width: 15%;">Fecha</th>
-                                    <th style="width: 15%;">Hora</th>
-                                    <th style="width: 30%;">Evento / Puesto</th>
-                                    <th style="width: 25%;">Coordenadas</th>
-                                    <th style="width: 15%;">Link GPS</th>
-                                </tr>
-                            </thead>
-                            <tbody>${tablaHTML}</tbody>
-                        </table>
-
-                        ${ronda.ruta.length > 1 ? `<div id="mapa_${idx}" class="mapa-box"></div>` : '<p style="font-size:11px; color:#64748b; padding:10px;">Ruta continua no registrada para este recorrido.</p>'}
-                    </div>
-                `;
+                htmlHTML += '</div>';
             });
 
-            ventanaImpresion.document.write(`
-                <html>
-                <head>
-                    <title>Reporte de Rondas con Ruta de Recorrido</title>
-                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
-                    <style>
-                        @page { size: A4 portrait; margin: 10mm; }
-                        body { font-family: Arial, sans-serif; color: #1e293b; margin: 0; padding: 0; background-color: #ffffff; }
-                        .header-main { background-color: #0f172a; color: #ffffff; padding: 15px; border-radius: 6px; margin-bottom: 15px; }
-                        .header-main h1 { margin: 0; font-size: 18px; color: #ffffff; }
-                        .header-main p { margin: 3px 0 0 0; font-size: 11px; color: #cbd5e1; }
-                        .ronda-card { border: 2px solid #0f172a; border-radius: 8px; margin-bottom: 20px; padding: 12px; page-break-inside: avoid; }
-                        .ronda-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 10px; }
-                        .ronda-header h2 { margin: 0; font-size: 14px; color: #0f172a; }
-                        .ronda-header p { margin: 2px 0 0 0; font-size: 11px; color: #64748b; font-weight: bold; }
-                        .btn-gmaps { background-color: #0284c7; color: #ffffff !important; padding: 6px 10px; border-radius: 4px; text-decoration: none; font-size: 10px; font-weight: bold; }
-                        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px; }
-                        th { background-color: #1e293b; color: #ffffff; padding: 8px; font-size: 10px; text-transform: uppercase; }
-                        tr:nth-child(even) { background-color: #f8fafc; }
-                        .mapa-box { width: 100%; height: 260px; border-radius: 6px; border: 1px solid #cbd5e1; margin-top: 8px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header-main">
-                        <h1>AUDITORÍA DE CONTROL DE RONDAS Y RUTAS RECORRIDAS</h1>
-                        <p>Generado desde el ${desde.split('-').reverse().join('/')} hasta el ${hasta.split('-').reverse().join('/')}</p>
-                    </div>
+            htmlHTML += '<script>window.onload = function() {';
+            htmlHTML += 'const data = ' + JSON.stringify(rondasAgrupadas) + ';';
+            htmlHTML += 'Object.keys(data).forEach((k, i) => {';
+            htmlHTML += '  let r = data[k];';
+            htmlHTML += '  if(r.ruta && r.ruta.length > 1) {';
+            htmlHTML += '    let m = L.map("mapa_" + i).setView(r.ruta[0], 15);';
+            htmlHTML += '    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}").addTo(m);';
+            htmlHTML += '    L.polyline(r.ruta, {color: "#00ffff", weight: 4}).addTo(m);';
+            htmlHTML += '  }';
+            htmlHTML += '}); setTimeout(() => { window.print(); }, 1000);';
+            htmlHTML += '};<' + '/script></body></html>';
 
-                    ${contenidoRondas}
-
-                    <script>
-                        window.onload = function() {
-                            const rondasData = ${JSON.stringify(rondasAgrupadas)};
-                            let keys = Object.keys(rondasData);
-
-                            keys.forEach((key, idx) => {
-                                const ronda = rondasData[key];
-                                if (ronda.ruta && ronda.ruta.length > 1) {
-                                    const map = L.map('mapa_' + idx, { attributionControl: false, zoomControl: false });
-                                    
-                                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                                        maxZoom: 19
-                                    }).addTo(map);
-
-                                    const polyline = L.polyline(ronda.ruta, { color: '#00ffff', weight: 4, opacity: 0.9 }).addTo(map);
-
-                                    let contadorP = 1;
-                                    ronda.eventos.forEach(ev => {
-                                        if (ev.coordenadas && ev.coordenadas !== "N/A") {
-                                            let parts = ev.coordenadas.split(',');
-                                            let lat = parseFloat(parts[0]);
-                                            let lon = parseFloat(parts[1]);
-                                            
-                                            let colorMarker = ev.evento.startsWith("INICIO") ? '#22c55e' : ev.evento.startsWith("FIN") ? '#ef4444' : '#3b82f6';
-                                            let labelText = ev.evento.startsWith("Puesto") ? `P${contadorP++}` : ev.evento;
-
-                                            L.circleMarker([lat, lon], {
-                                                color: '#ffffff',
-                                                radius: 8,
-                                                fillColor: colorMarker,
-                                                fillOpacity: 1,
-                                                weight: 2
-                                            }).addTo(map).bindPopup(`<b>${labelText}</b><br>${ev.hora}`);
-                                        }
-                                    });
-
-                                    map.fitBounds(polyline.getBounds(), { padding: [25, 25] });
-                                }
-                            });
-
-                            setTimeout(() => { window.print(); }, 1200);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
-            ventanaImpresion.document.close();
+            ventana.document.write(htmlHTML);
+            ventana.document.close();
         }
     </script>
 </body>
