@@ -13,8 +13,8 @@
 </head>
 <body class="bg-slate-900 min-h-screen flex flex-col justify-between p-4">
 
-    <!-- NOTIFICACIÓN PERSONALIZADA (SIN ALERTAS FEAS DE NAVEGADOR) -->
-    <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-white font-bold px-5 py-3 rounded-xl border-2 border-slate-600 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
+    <!-- NOTIFICACIÓN PERSONALIZADA -->
+    <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
         <span id="textoToast"></span>
     </div>
 
@@ -50,7 +50,7 @@
             </button>
 
             <button id="btnPuesto" type="button" class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-black py-6 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-xl tracking-wider texto-resaltado border-b-4 border-blue-800 hidden">
-                📍 MARCAR PUESTO <span id="numPuestoSig" class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">1</span>
+                📍 MARCAR PUESTO <span class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">1</span>
             </button>
 
             <button id="btnFin" type="button" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 px-6 rounded-xl shadow-xl transition-all transform active:scale-95 text-lg tracking-wider texto-resaltado border-b-4 border-rose-800 hidden">
@@ -95,6 +95,18 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIRMACIÓN CERRAR RONDA -->
+    <div id="modalConfirmarFin" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full text-center">
+            <h3 class="text-lg font-black uppercase tracking-wider text-white mb-2">FINALIZAR RONDA</h3>
+            <p class="text-xs font-black text-slate-300 mb-6">¿DESEAS CERRAR EL RECORRIDO ACTUAL?</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button id="btnCancelarFin" type="button" class="bg-slate-800 hover:bg-slate-700 text-white font-black py-2.5 px-4 rounded-xl border border-slate-600 text-xs">NO, CONTINUAR</button>
+                <button id="btnConfirmarFin" type="button" class="bg-rose-600 hover:bg-rose-500 text-white font-black py-2.5 px-4 rounded-xl text-xs border-b-2 border-rose-800">SÍ, FINALIZAR</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let enRecorrido = false;
         let idRondaActual = null;
@@ -102,21 +114,26 @@
         let vigiladorActual = "";
         let watchGPSId = null;
         let rutaCoordenadas = [];
+        let timerToast = null;
 
         function mostrarNotificacion(mensaje, esError = false) {
             const toast = document.getElementById('notificacionToast');
             const texto = document.getElementById('textoToast');
+            
+            if (timerToast) clearTimeout(timerToast);
+
             texto.innerText = mensaje;
             
             if (esError) {
-                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-rose-950 text-rose-200 font-bold px-5 py-3 rounded-xl border-2 border-rose-600 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm";
+                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-rose-950 text-rose-200 font-bold px-5 py-3 rounded-xl border-2 border-rose-600 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm pointer-events-auto";
             } else {
-                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm";
+                toast.className = "fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-100 text-center max-w-xs text-sm pointer-events-auto";
             }
 
-            setTimeout(() => {
+            timerToast = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'pointer-events-auto');
                 toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 3000);
+            }, 2500);
         }
 
         document.addEventListener("DOMContentLoaded", function() {
@@ -159,8 +176,20 @@
                 await iniciarRecorrido(nombre.toUpperCase());
             });
 
+            document.getElementById('btnFin').addEventListener('click', function() {
+                document.getElementById('modalConfirmarFin').classList.remove('hidden');
+            });
+
+            document.getElementById('btnCancelarFin').addEventListener('click', function() {
+                document.getElementById('modalConfirmarFin').classList.add('hidden');
+            });
+
+            document.getElementById('btnConfirmarFin').addEventListener('click', async function() {
+                document.getElementById('modalConfirmarFin').classList.add('hidden');
+                await ejecutarFinRecorrido();
+            });
+
             document.getElementById('btnPuesto').addEventListener('click', marcarPuesto);
-            document.getElementById('btnFin').addEventListener('click', finalizarRecorrido);
             document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
         });
 
@@ -279,9 +308,7 @@
             }
         }
 
-        async function finalizarRecorrido() {
-            if (!confirm("¿Desea cerrar el recorrido actual?")) return;
-
+        async function ejecutarFinRecorrido() {
             detenerRastreoContinuo();
             const ahora = new Date();
 
@@ -351,7 +378,6 @@
                 btnPuesto.classList.remove('hidden');
                 btnFin.classList.remove('hidden');
                 
-                // Actualiza el texto completo del botón de marcar puesto sin depender de referencias rotas
                 btnPuesto.innerHTML = `📍 MARCAR PUESTO <span class="bg-slate-950 px-3 py-0.5 rounded ml-1 border border-slate-600 text-white">${contadorPuestos + 1}</span>`;
                 
                 estadoTexto.innerText = "EN RECORRIDO";
@@ -411,21 +437,29 @@
             let htmlHTML = '<!DOCTYPE html><html><head><title>Reporte de Rondas</title>';
             htmlHTML += '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />';
             htmlHTML += '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><' + '/script>';
-            htmlHTML += '<style>body{font-family:Arial,sans-serif;margin:15px;color:#0f172a;} .ronda{border:2px solid #0f172a;padding:10px;margin-bottom:15px;border-radius:6px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #cbd5e1;padding:6px;font-size:12px;text-align:left;} th{background:#0f172a;color:#fff;} .mapa{width:100%;height:250px;margin-top:10px;}</style>';
+            htmlHTML += '<style>body{font-family:Arial,sans-serif;margin:15px;color:#0f172a;} .ronda{border:2px solid #0f172a;padding:10px;margin-bottom:15px;border-radius:6px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #cbd5e1;padding:6px;font-size:11px;text-align:left;} th{background:#0f172a;color:#fff;} .mapa{width:100%;height:250px;margin-top:10px;} a.map-link{color:#0284c7;font-weight:bold;text-decoration:underline;} .btn-mapa{display:inline-block;margin-top:8px;padding:6px 12px;background:#0284c7;color:#fff;text-decoration:none;font-weight:bold;font-size:11px;border-radius:4px;}</style>';
             htmlHTML += '</head><body><h2>REPORTE DE RONDAS Y RUTAS GPS</h2>';
 
             Object.keys(rondasAgrupadas).forEach((key, idx) => {
                 const r = rondasAgrupadas[key];
                 htmlHTML += '<div class="ronda"><h3>' + key + ' - Vigilador: ' + r.vigilador + '</h3>';
-                htmlHTML += '<table><thead><tr><th>Fecha</th><th>Hora</th><th>Evento</th><th>Coordenadas</th></tr></thead><tbody>';
+                htmlHTML += '<table><thead><tr><th>Fecha</th><th>Hora</th><th>Evento</th><th>Coordenadas</th><th>Mapa</th></tr></thead><tbody>';
                 
                 r.eventos.forEach(ev => {
-                    htmlHTML += '<tr><td>' + ev.fecha + '</td><td>' + ev.hora + '</td><td>' + ev.evento + '</td><td>' + ev.coordenadas + '</td></tr>';
+                    let linkText = "-";
+                    if (ev.coordenadas && ev.coordenadas !== "N/A") {
+                        linkText = '<a href="https://maps.google.com/?q=' + ev.coordenadas + '" target="_blank" class="map-link">Ver Punto</a>';
+                    }
+                    htmlHTML += '<tr><td>' + ev.fecha + '</td><td>' + ev.hora + '</td><td>' + ev.evento + '</td><td>' + ev.coordenadas + '</td><td>' + linkText + '</td></tr>';
                 });
 
                 htmlHTML += '</tbody></table>';
+                
                 if (r.ruta && r.ruta.length > 1) {
                     htmlHTML += '<div id="mapa_' + idx + '" class="mapa"></div>';
+                    let rutaUrl = "https://www.google.com/maps/dir/";
+                    r.ruta.forEach(pt => { rutaUrl += pt[0] + "," + pt[1] + "/"; });
+                    htmlHTML += '<a href="' + rutaUrl + '" target="_blank" class="btn-mapa">📍 ABRIR RECORRIDO COMPLETO EN GOOGLE MAPS</a>';
                 }
                 htmlHTML += '</div>';
             });
@@ -438,6 +472,19 @@
             htmlHTML += '    let m = L.map("mapa_" + i).setView(r.ruta[0], 15);';
             htmlHTML += '    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}").addTo(m);';
             htmlHTML += '    L.polyline(r.ruta, {color: "#00ffff", weight: 4}).addTo(m);';
+            
+            // DIBUJAR MARCADORES PARA CADA EVENTO
+            htmlHTML += '    r.eventos.forEach(ev => {';
+            htmlHTML += '      if(ev.coordenadas && ev.coordenadas !== "N/A") {';
+            htmlHTML += '        let parts = ev.coordenadas.split(",");';
+            htmlHTML += '        if(parts.length === 2) {';
+            htmlHTML += '          let lat = parseFloat(parts[0]);';
+            htmlHTML += '          let lon = parseFloat(parts[1]);';
+            htmlHTML += '          L.marker([lat, lon]).addTo(m).bindPopup("<b>" + ev.evento + "</b><br>" + ev.hora);';
+            htmlHTML += '        }';
+            htmlHTML += '      }';
+            htmlHTML += '    });';
+
             htmlHTML += '  }';
             htmlHTML += '}); setTimeout(() => { window.print(); }, 1000);';
             htmlHTML += '};<' + '/script></body></html>';
