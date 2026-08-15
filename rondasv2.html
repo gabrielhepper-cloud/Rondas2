@@ -5,39 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Rondas</title>
     <meta name="theme-color" content="#1e293b">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mapas -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; color: #ffffff !important; }
-        .texto-resaltado { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9); }
+        body { font-family: system-ui, -apple-system, sans-serif; }
     </style>
 </head>
 <body class="bg-slate-900 min-h-screen flex flex-col p-4">
 
-    <!-- NOTIFICACIÓN -->
+    <!-- Notificación -->
     <div id="notificacionToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-slate-950 text-emerald-400 font-bold px-5 py-3 rounded-xl border-2 border-emerald-500 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none text-center max-w-xs text-sm">
         <span id="textoToast"></span>
     </div>
 
-    <!-- CABECERA -->
     <header class="bg-slate-950 p-4 text-center border-b-2 border-slate-700 rounded-xl mb-4">
-        <h1 class="text-xl font-black tracking-widest text-white texto-resaltado">CONTROL DE RONDAS</h1>
+        <h1 class="text-xl font-black tracking-widest text-white">CONTROL DE RONDAS</h1>
     </header>
 
     <main class="max-w-md mx-auto w-full flex-grow flex flex-col gap-4">
-        
         <div id="panelVigiladorActivo" class="bg-slate-950 p-3 rounded-xl border-2 border-slate-700 text-center hidden">
             <span class="text-xs font-black uppercase tracking-wider text-slate-400">VIGILADOR:</span>
-            <p id="nombreVigiladorEnCurso" class="text-lg font-black text-white uppercase mt-0.5 tracking-wide texto-resaltado"></p>
+            <p id="nombreVigiladorEnCurso" class="text-lg font-black text-white uppercase mt-0.5 tracking-wide"></p>
         </div>
 
         <div class="bg-slate-950 p-5 rounded-xl border-2 border-slate-700 text-center">
             <h2 class="text-xs font-black uppercase tracking-widest text-slate-400">ESTADO</h2>
-            <div id="estadoTexto" class="text-2xl font-black mt-2 text-white tracking-wide texto-resaltado">NO INICIADO</div>
+            <div id="estadoTexto" class="text-2xl font-black mt-2 text-white tracking-wide">NO INICIADO</div>
         </div>
 
         <div class="grid grid-cols-1 gap-3">
             <button id="btnInicio" class="w-full bg-emerald-600 text-white font-black py-5 rounded-xl shadow-xl text-xl border-b-4 border-emerald-800 active:scale-95">▶ INICIAR RECORRIDO</button>
-            <button id="btnPuesto" class="w-full bg-blue-600 text-white font-black py-5 rounded-xl shadow-xl text-xl border-b-4 border-blue-800 active:scale-95 hidden">📍 MARCAR PUESTO</button>
+            <button id="btnPuesto" class="w-full bg-blue-600 text-white font-black py-5 rounded-xl shadow-xl text-xl border-b-4 border-blue-800 active:scale-95 hidden">📍 MARCAR PUESTO 1</button>
             <button id="btnFin" class="w-full bg-rose-600 text-white font-black py-4 rounded-xl shadow-xl text-lg border-b-4 border-rose-800 active:scale-95 hidden">⏹ TERMINAR RECORRIDO</button>
         </div>
 
@@ -51,7 +51,7 @@
         </div>
     </main>
 
-    <!-- MODAL CORREGIDO: SE USA POSICIÓN ABSOLUTA DENTRO DE UN CONTENEDOR CON SCROLL PARA EL TECLADO -->
+    <!-- Modales -->
     <div id="modalNombre" class="fixed inset-0 bg-black/90 z-[200] hidden overflow-y-auto">
         <div class="min-h-screen flex items-center justify-center p-4">
             <div class="bg-slate-950 border-2 border-slate-700 p-6 rounded-2xl max-w-xs w-full text-center shadow-2xl">
@@ -93,27 +93,32 @@
             document.getElementById('btnInicio').addEventListener('click', () => document.getElementById('modalNombre').classList.remove('hidden'));
             document.getElementById('btnCancelarModal').addEventListener('click', () => document.getElementById('modalNombre').classList.add('hidden'));
             
-            document.getElementById('btnConfirmarModal').addEventListener('click', async () => {
+            document.getElementById('btnConfirmarModal').addEventListener('click', () => {
                 const nombre = document.getElementById('inputNombre').value.trim();
                 if(!nombre) return;
                 document.getElementById('modalNombre').classList.add('hidden');
                 
-                // --- CORRECCIÓN LÓGICA DE INICIO ---
                 vigiladorActual = nombre.toUpperCase();
                 idRondaActual = "Ronda #" + new Date().getTime().toString().slice(-6);
                 contadorPuestos = 0;
                 enRecorrido = true;
                 rutaCoordenadas = []; 
                 
-                // Registrar inicio
-                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "INICIO RECORRIDO", coordenadas: "0,0"});
+                // Simulación de coordenadas iniciales
+                const coord = [-34.42, -58.65]; 
+                rutaCoordenadas.push({lat: coord[0], lng: coord[1], evento: "INICIO"});
+                
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "INICIO RECORRIDO", coords: coord});
                 actualizarInterfaz();
-                mostrarNotificacion("Recorrido Iniciado");
             });
 
             document.getElementById('btnPuesto').addEventListener('click', () => {
                 contadorPuestos++;
-                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "Puesto " + contadorPuestos, coordenadas: "0,0"});
+                const coord = [-34.42 + (Math.random()*0.001), -58.65 + (Math.random()*0.001)];
+                rutaCoordenadas.push({lat: coord[0], lng: coord[1], evento: "Puesto " + contadorPuestos});
+                
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "Puesto " + contadorPuestos, coords: coord});
+                actualizarInterfaz();
                 mostrarNotificacion("Puesto " + contadorPuestos + " registrado");
             });
 
@@ -122,7 +127,7 @@
             document.getElementById('btnConfirmarFin').addEventListener('click', () => {
                 document.getElementById('modalConfirmarFin').classList.add('hidden');
                 enRecorrido = false;
-                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "FIN RECORRIDO", coordenadas: "0,0", rutaCompleta: rutaCoordenadas});
+                guardarRegistro({idRonda: idRondaActual, vigilador: vigiladorActual, fecha: hoy, hora: new Date().toLocaleTimeString(), evento: "FIN RECORRIDO", coords: [-34.42, -58.65], rutaCompleta: rutaCoordenadas});
                 actualizarInterfaz();
             });
             document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
@@ -137,6 +142,10 @@
             document.getElementById('btnPuesto').classList.toggle('hidden', !enRecorrido);
             document.getElementById('btnFin').classList.toggle('hidden', !enRecorrido);
             document.getElementById('panelVigiladorActivo').classList.toggle('hidden', !enRecorrido);
+            
+            // Actualizar texto del botón puesto
+            document.getElementById('btnPuesto').innerText = "📍 MARCAR PUESTO " + (contadorPuestos + 1);
+            
             document.getElementById('estadoTexto').innerText = enRecorrido ? "EN RECORRIDO" : "NO INICIADO";
             document.getElementById('estadoTexto').className = enRecorrido ? "text-2xl font-black mt-2 text-emerald-400 tracking-wide" : "text-2xl font-black mt-2 text-white";
             if(enRecorrido) document.getElementById('nombreVigiladorEnCurso').innerText = vigiladorActual;
@@ -147,25 +156,53 @@
             const hasta = document.getElementById('fechaHasta').value;
             const todos = JSON.parse(localStorage.getItem('rondas_logs')) || [];
             const filtrados = todos.filter(reg => reg.fecha >= desde && reg.fecha <= hasta);
+            
             if(filtrados.length === 0) return mostrarNotificacion("No hay datos");
 
             const rondas = {};
             filtrados.forEach(reg => {
                 if(!rondas[reg.idRonda]) rondas[reg.idRonda] = { vigilador: reg.vigilador, eventos: [], ruta: [] };
                 rondas[reg.idRonda].eventos.push(reg);
+                if(reg.rutaCompleta) rondas[reg.idRonda].ruta = reg.rutaCompleta;
             });
 
             const ventana = window.open('', '_blank');
-            let html = `<html><head><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /><style>@media print { .ronda { page-break-inside: avoid; } } .ronda{border:1px solid #000; padding:10px; margin-bottom:20px;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #000; padding:5px; font-size:12px;} .mapa{height:300px; margin-top:10px;}</style></head><body>`;
+            let html = `<html><head>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>
+                <style>
+                    body{font-family:sans-serif; padding:20px;}
+                    .ronda{border:1px solid #ccc; padding:20px; margin-bottom:40px; page-break-inside: avoid;}
+                    table{width:100%; border-collapse:collapse; margin-bottom:20px;}
+                    th,td{border:1px solid #000; padding:8px; text-align:left;}
+                    .mapa{height:300px; width:100%; margin-top:10px;}
+                </style>
+            </head><body>`;
             
             Object.keys(rondas).forEach((k, idx) => {
                 const r = rondas[k];
-                html += `<div class="ronda"><h3>${k} - ${r.vigilador}</h3><table>`;
+                html += `<div class="ronda"><h2>${k} - VIGILADOR: ${r.vigilador}</h2><table>`;
                 r.eventos.forEach(ev => html += `<tr><td>${ev.fecha}</td><td>${ev.hora}</td><td>${ev.evento}</td></tr>`);
                 html += `</table><div id="m${idx}" class="mapa"></div></div>`;
             });
 
-            html += `<script>window.onload = () => { setTimeout(() => window.print(), 1000); };<\/script></body></html>`;
+            html += `<script>
+                window.onload = () => {
+                    ${Object.keys(rondas).map((k, idx) => {
+                        const r = rondas[k];
+                        const ruta = JSON.stringify(r.ruta);
+                        return `
+                            var map${idx} = L.map('m${idx}').setView([-34.42, -58.65], 16);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map${idx});
+                            var ruta = ${ruta};
+                            ruta.forEach(p => {
+                                L.marker([p.lat, p.lng]).addTo(map${idx}).bindPopup(p.evento).openPopup();
+                            });
+                        `;
+                    }).join('')}
+                    setTimeout(() => window.print(), 1000);
+                };
+            <\/script></body></html>`;
             ventana.document.write(html); ventana.document.close();
         }
     </script>
